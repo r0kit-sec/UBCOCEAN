@@ -1,6 +1,10 @@
 input
 **.jpg
 **.png
+**.json
 models
 venv
 lib
+.venv
+checkpoints
+__pycache__
