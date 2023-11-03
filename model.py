@@ -2,8 +2,12 @@ import cv2
 import skimage
 import numpy as np
 import torch.nn.functional as F
+import pandas as pd
+import zipfile
+from io import TextIOWrapper
 from torch import nn
 from torch.utils.data import Dataset
+from sklearn.preprocessing import LabelEncoder
 
 
 class UBCOCEANNet1(nn.Module):
@@ -86,16 +90,33 @@ class RescaleWithAspectRatioTransform():
         scale = longest_edge / max(height, width)
         image = cv2.resize(image, dsize=(int(np.ceil(width * scale)), int(np.ceil(height * scale))), interpolation=cv2.INTER_AREA)
         return image
+    
+
+class OrdinalEncodeTransform(object):
+    def __init__(self, train_data):
+        self.le = LabelEncoder()
+        unique_labels = train_data['label'].unique()
+        sorted_unique_labels = pd.Series(unique_labels).sort_values().tolist()
+        self.le.fit(sorted_unique_labels)
+
+    def encode(self, label):
+        return self.le.transform([label]).squeeze()
+
+    def decode(self, index):
+        return self.le.inverse_transform(index)
+
+    def __call__(self, label):
+        return self.encode(label)
+
 
 class UCBOCEANTestDataset(Dataset):
-    def __init__(self, data, data_dir, transform=None, target_transform=None):
+    def __init__(self, data, data_dir, transform=None):
         # Don't open images that allocate more than 20GB RAM
         import PIL
         PIL.Image.MAX_IMAGE_PIXELS = 20971520000
         self.data = data
         self.data_dir = data_dir
         self.transform = transform
-        self.target_transform = target_transform
 
     def __len__(self):
         return len(self.data)
@@ -105,15 +126,10 @@ class UCBOCEANTestDataset(Dataset):
         x = self.data.iloc[index]
 
         # Preprocess the data as needed
-        x, label = self.preprocess(x)
-
-        # Return the preprocessed data and its label (if applicable)
-        return x, label
+        x, image_id = self.preprocess(x)
+        return x, image_id
     
     def preprocess(self, x):
-        # Apply any preprocessing transformations to the data row
-        label = x['label']
-        
         # Load the data from the zip file
         image_id = x['image_id']
         image = self.load_test_image(image_id)
@@ -121,10 +137,7 @@ class UCBOCEANTestDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         
-        if self.target_transform:
-            label = self.target_transform(label)
-
-        return image, label
+        return image, image_id
 
     def load_test_image(self, image_id):
         image_file_name = f'{image_id}.png'
