@@ -1,12 +1,12 @@
 ## Overview
 
-This project explores the design of batch-oriented ML pipelines for data-intensive image processing workloads.
-It focuses on preprocessing, staged execution, GPU-backed training/evaluation, and operational constraints
-(memory, I/O throughput, and reproducibility).
+This repository contains an exploratory ML project focused on building
+batch-oriented pipelines for data-intensive image processing workloads.
 
-## What this demonstrates
+The emphasis is on preprocessing large image artifacts, staged execution,
+and running GPU-backed training and evaluation jobs under real-world
+memory, I/O, and performance constraints rather than on model accuracy
+or competition results.
 
-- Batch-style preprocessing of multi-gigabyte image artifacts via tiling
-- GPU-backed training and evaluation workflows
-- Managing memory and data-loading constraints
-- Reproducible experiment execution in a cloud environment
+This project is shared as an example of batch ML workflow design and
+systems-oriented thinking, not as a polished or production-ready codebase.
